@@ -93,7 +93,8 @@ public class Prediction {
                 person.setEventDays(person.calculateEventDays());
                 person.setVenueMap(person.calculateVenueMaps());
                 person.setPromoterMap(person.calculatePromoterMaps());
-                
+                LOGGER.info(person.calculatePromoterCorrelationMaps().toString());
+
             }
 
 

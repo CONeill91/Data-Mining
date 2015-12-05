@@ -24,7 +24,7 @@ public class Person {
     private HashMap<String,Integer> eventDays;
     private HashMap<String,Integer> venueMap;
     private HashMap<String,Integer> promoterMap;
-    private HashMap<String,String> promoterCorrelationMap;
+    private HashMap<Correlation,Integer> promoterCorrelationMap;
 
     @Override
     public String toString() {
@@ -183,6 +183,27 @@ public class Person {
             }
         }
         return days;
+    }
+
+
+
+    public HashMap<Correlation,Integer> calculatePromoterCorrelationMaps() {
+        // Init Map
+        HashMap<Correlation,Integer> correlationMap = new HashMap<Correlation,Integer>();
+        HashMap<String,Integer> promoterMap = this.getPromoterMap();
+        HashSet<String> promoters = new HashSet<String>(promoterMap.keySet());
+        for(String prom : promoters){
+            for(String prom1 : promoters){
+                Correlation temp = new Correlation();
+                temp.setEventA(prom);
+                temp.setEventB(prom1);
+                if(temp.getEventA().equals(temp.getEventB())){
+                    continue;
+                }
+                correlationMap.put(temp,promoterMap.get(temp.getEventA()) / promoterMap.get(temp.getEventB()));
+            }
+        }
+        return correlationMap;
     }
 
     
