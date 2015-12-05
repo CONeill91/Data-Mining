@@ -5,6 +5,8 @@
 
 import model.*;
 import util.CsvImporter;
+
+import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -68,18 +70,19 @@ public class Prediction {
             }
 
 
-            // TODO Maybe remove? Removing people from the list if they haven't been to any events
+
             // They don't contribute anything but zeroes
             removePeopleWithNoAttendance(listOfPeople);
             removeEventsWithNoAttendance(listOfEvents);
-
-
-
-
             calculateDemographic(listOfPeople,listOfEvents);
+            calculateGenderSplit(listOfEvents);
+
+
+
+
             for (Event event : listOfEvents) {
 
-              //  event.setAttending(event.getMalesAttending() + event.getFemalesAttending());
+                event.setAttending(event.getMalesAttending() + event.getFemalesAttending());
              //  LOGGER.info("Total : " + event.getAttending() + "  Males: " + event.getMalesAttending() + "  Females: " + event.getFemalesAttending() + "   Nones: " +event.getNonesAttending());
                 //LOGGER.info("AverageAttendance :" + event.getVenue().getAverageCapacity() + " AveragePrice: " + event.getAveragePrice());
 
@@ -89,8 +92,7 @@ public class Prediction {
                // LOGGER.info(person.getAverageSpend() + "");
                 person.setEventDays(person.calculateEventDays());
                 person.setVenueMap(person.calculateVenueMaps());
-               LOGGER.info(person.getAverageFemaleSplit() + "");
-                LOGGER.info(person.getAverageMaleSplit() + "");
+
 
             }
 
@@ -102,11 +104,7 @@ public class Prediction {
     }
 
 
-    public static void calculateSplit(ArrayList<Event> events){
-        for(Event event : events){
 
-        }
-    }
 
     public static void calculateDemographic(ArrayList<Person> persons, ArrayList<Event> events){
         for(Event event: events){
@@ -124,6 +122,18 @@ public class Prediction {
             }
         }
 
+    }
+    // Calculate the gender split for each event
+    public static void calculateGenderSplit(ArrayList<Event> events){
+        for(Event event : events){
+            int total = event.getFemalesAttending() + event.getMalesAttending();
+            if(total != 0){
+                event.setDemograpicMale(((double)event.getMalesAttending() / (double)total) * 100.00);
+            }
+            if(event.getDemograpicMale() != 0){
+                event.setDemograpicFemale(100.00 - event.getDemograpicMale());
+            }
+        }
     }
 
     // Remove user's which have 0 events attended.
@@ -161,13 +171,33 @@ public class Prediction {
         return 0;
         }
 
-    public static int promotorPrediction(Person person){
+    public static int promotorPrediction(Person person, Event futureEvent){
         return 0;
     }
 
 
 
-    public static int genderPrediction(Person person){
+    public static int genderPrediction(Person person, Event futureEvent){
+        ArrayList<Event> events = person.getPastEventAttendance();
+        int totalMale = 0;
+        int totalFemale = 0;
+        int totalNone = 0;
+        int count = 0;
+        for (Event event : events){
+            count++;
+            totalFemale += event.getFemalesAttending();
+            totalMale += event.getMalesAttending();
+            totalNone += event.getNonesAttending();
+        }
+
+        int maleAverage = totalMale / count;
+        int femaleAverage = totalFemale / count;
+        int noneAverage = totalNone / count;
+
+
+
+        
+
 
 
         return 0;
@@ -186,14 +216,27 @@ public class Prediction {
         return 0;
     }
 
-    public static int venuePrediction(Person person, Event futureEvent){
+    public static double venuePrediction(Person person, Event futureEvent){
         String futureEventVenue = futureEvent.getVenue().getName();
         HashMap<String,Integer> personVenueMap = person.getVenueMap();
         int numTimesAtVenue = 0;
         if (personVenueMap.containsKey(futureEventVenue)){
              numTimesAtVenue = personVenueMap.get(futureEventVenue);
         }
-        // TODO : Finish tomorrow
+
+        if(numTimesAtVenue >= 15){
+            return VENUE_WEIGHT;
+        }
+        else if (numTimesAtVenue < 15 && numTimesAtVenue >= 10){
+            return VENUE_WEIGHT * 0.80;
+        }
+        else if(numTimesAtVenue < 10 && numTimesAtVenue >= 7){
+            return VENUE_WEIGHT * 0.50;
+        }
+        else if(numTimesAtVenue < 7 && numTimesAtVenue >= 3){
+            return VENUE_WEIGHT * 0.30;
+        }
+
         return 0;
     }
 
@@ -213,14 +256,15 @@ public class Prediction {
     }
 
 
+    // Day Weights
+    // Out on this day :
+    // >= 15 100
+    // >= 10 80%
+    // >= 7 50%
+    // >= 3 30*
+    
+    
     public static double dayPrediction(Person person,Event futureEvent){
-        // Day Weights
-        // Out on this day :
-        // >= 15 100
-        // >= 10 80%
-        // >= 7 50%
-        // >= 3 30*
-
         String dayofFutureEvent = futureEvent.getDay();
         HashMap<String,Integer> dayMap = person.getEventDays();
         int numTimesOutThatDay = 0;

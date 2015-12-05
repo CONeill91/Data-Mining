@@ -36,23 +36,6 @@ public class Person {
     private HashMap<String,Integer> promoterMap;
 
 
-    public double getAverageMaleSplit() {
-        return averageMaleSplit;
-    }
-
-    public void setAverageMaleSplit(double averageMaleSplit) {
-        this.averageMaleSplit = averageMaleSplit;
-    }
-
-    public double getAverageFemaleSplit() {
-        return averageFemaleSplit;
-    }
-
-    public void setAverageFemaleSplit(double averageFemaleSplit) {
-        this.averageFemaleSplit = averageFemaleSplit;
-    }
-
-    private double averageFemaleSplit;
 
 
     public int getAverageSpend() {

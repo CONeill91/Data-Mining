@@ -32,6 +32,17 @@ public class Event {
     private String price_4;
     private int averagePrice;
     private double demograpicMale;
+    private double demograpicFemale;
+
+
+    public double getDemograpicFemale() {
+        return demograpicFemale;
+    }
+
+    public void setDemograpicFemale(double demograpicFemale) {
+        this.demograpicFemale = demograpicFemale;
+    }
+
 
     public double getDemograpicMale() {
         return demograpicMale;
