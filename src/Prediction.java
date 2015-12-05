@@ -177,29 +177,40 @@ public class Prediction {
 
 
 
-    public static int genderPrediction(Person person, Event futureEvent){
+    public static double genderPrediction(Person person, Event futureEvent) {
         ArrayList<Event> events = person.getPastEventAttendance();
-        int totalMale = 0;
-        int totalFemale = 0;
-        int totalNone = 0;
-        int count = 0;
-        for (Event event : events){
+        double count = 0;
+        double totalMaleDemo = 0;
+        double totalFemaleDemo = 0;
+        for (Event event : events) {
+            totalMaleDemo += event.getDemograpicMale();
+            totalFemaleDemo += event.getDemograpicFemale();
             count++;
-            totalFemale += event.getFemalesAttending();
-            totalMale += event.getMalesAttending();
-            totalNone += event.getNonesAttending();
         }
+        if (count != 0) {
+            double averageFemaleDemo = totalFemaleDemo / count;
+            double averageMaleDemo = totalMaleDemo / count;
 
-        int maleAverage = totalMale / count;
-        int femaleAverage = totalFemale / count;
-        int noneAverage = totalNone / count;
+            double eventMaleDemo = futureEvent.getDemograpicMale();
+            double eventFemaleDemo = futureEvent.getDemograpicFemale();
+
+            if ((averageFemaleDemo >= eventFemaleDemo - 5 && averageFemaleDemo <= eventFemaleDemo + 5) &&
+                    (averageMaleDemo >= eventMaleDemo - 5 && averageMaleDemo <= eventMaleDemo + 5)) {
+                return GENDER_WEIGHT;
+            } else if ((averageFemaleDemo >= eventFemaleDemo - 10 && averageFemaleDemo <= eventFemaleDemo + 10) &&
+                    (averageMaleDemo >= eventMaleDemo - 10 && averageMaleDemo <= eventMaleDemo + 10)) {
+                return GENDER_WEIGHT * 0.80;
+            } else if ((averageFemaleDemo >= eventFemaleDemo - 15 && averageFemaleDemo <= eventFemaleDemo + 15) &&
+                    (averageMaleDemo >= eventMaleDemo - 15 && averageMaleDemo <= eventMaleDemo + 15)) {
+                return GENDER_WEIGHT * 0.50;
+            } else if ((averageFemaleDemo >= eventFemaleDemo - 20 && averageFemaleDemo <= eventFemaleDemo + 20) &&
+                    (averageMaleDemo >= eventMaleDemo - 20 && averageMaleDemo <= eventMaleDemo + 20)) {
+                return GENDER_WEIGHT * 0.30;
 
 
+            }
 
-        
-
-
-
+        }
         return 0;
     }
 
