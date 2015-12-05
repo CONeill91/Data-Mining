@@ -87,14 +87,16 @@ public class Prediction {
                 //LOGGER.info("AverageAttendance :" + event.getVenue().getAverageCapacity() + " AveragePrice: " + event.getAveragePrice());
 
             }
+            // Set remaining Person Values
             for(Person person : listOfPeople){
                 person.setAverageSpend();
-               // LOGGER.info(person.getAverageSpend() + "");
                 person.setEventDays(person.calculateEventDays());
                 person.setVenueMap(person.calculateVenueMaps());
-
-
+                person.setPromoterMap(person.calculatePromoterMaps());
+                
             }
+
+
 
         }
         catch(FileNotFoundException e){
@@ -136,7 +138,8 @@ public class Prediction {
         }
     }
 
-    // Remove user's which have 0 events attended.
+
+    // Remove users which have 0 events attended.
     public static void removePeopleWithNoAttendance(ArrayList<Person> persons){
         Iterator<Person> iter = persons.iterator();
 
@@ -147,7 +150,7 @@ public class Prediction {
                 iter.remove();
         }
     }
-
+    // Remove events with 0 attendance.
     public static void removeEventsWithNoAttendance(ArrayList<Event> events){
         Iterator<Event> iter = events.iterator();
 
@@ -190,7 +193,6 @@ public class Prediction {
         if (count != 0) {
             double averageFemaleDemo = totalFemaleDemo / count;
             double averageMaleDemo = totalMaleDemo / count;
-
             double eventMaleDemo = futureEvent.getDemograpicMale();
             double eventFemaleDemo = futureEvent.getDemograpicFemale();
 
@@ -206,8 +208,6 @@ public class Prediction {
             } else if ((averageFemaleDemo >= eventFemaleDemo - 20 && averageFemaleDemo <= eventFemaleDemo + 20) &&
                     (averageMaleDemo >= eventMaleDemo - 20 && averageMaleDemo <= eventMaleDemo + 20)) {
                 return GENDER_WEIGHT * 0.30;
-
-
             }
 
         }
@@ -263,7 +263,6 @@ public class Prediction {
                 return PRICE_WEIGHT * 0.50;
         }
         return 0;
-
     }
 
 
@@ -283,30 +282,28 @@ public class Prediction {
              numTimesOutThatDay = dayMap.get(dayofFutureEvent);
         }
         if(numTimesOutThatDay >= 15){
-           return (double)DAY_WEIGHT;
+           return DAY_WEIGHT;
         }
         else if (numTimesOutThatDay < 15 && numTimesOutThatDay >= 10){
-            return (double)DAY_WEIGHT * 0.80;
+            return DAY_WEIGHT * 0.80;
         }
         else if(numTimesOutThatDay < 10 && numTimesOutThatDay >= 7){
-            return (double)DAY_WEIGHT * 0.50;
+            return DAY_WEIGHT * 0.50;
         }
         else if(numTimesOutThatDay < 7 && numTimesOutThatDay >= 3){
-            return (double) DAY_WEIGHT * 0.30;
+            return DAY_WEIGHT * 0.30;
         }
         return 0;
     }
 
 
-    /*public static double calculatePredictionScore(Person person, Event futureEvent){
-        int totalScore = dayPrediction(person,futureEvent) + datePrediction(futureEvent) + pricePrediction(person,futureEvent)
-                + venuePrediction(person,futureEvent) + venuePrediction(person,futureEvent) + promotorPrediction(person);
+    public static double calculatePredictionScore(Person person, Event futureEvent){
+        double totalScore = dayPrediction(person,futureEvent) + datePrediction(futureEvent) + pricePrediction(person,futureEvent)
+                + venuePrediction(person,futureEvent) + venuePrediction(person,futureEvent);
 
-         return (double) totalScore / 100.00;
+         return totalScore / 100.00;
 
-
-
-    }*/
+    }
 
     // Method which initializes list with all date values of BH's in 2016,2015,2014,2013;
     private static ArrayList<Date> initBankHolidayList() {

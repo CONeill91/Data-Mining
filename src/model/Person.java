@@ -18,43 +18,13 @@ public class Person {
     private String user_id;
     private String gender;
     private String precision;
-    public Set<String> idOfEventsAttended = new HashSet<String>();
-    private ArrayList<Event> pastEventAttendance = new ArrayList<Event>();
     private int averageSpend;
+    private Set<String> idOfEventsAttended = new HashSet<String>();
+    private ArrayList<Event> pastEventAttendance = new ArrayList<Event>();
     private HashMap<String,Integer> eventDays;
     private HashMap<String,Integer> venueMap;
-    private double averageMaleSplit;
-
-    public HashMap<String, Integer> getPromoterMap() {
-        return promoterMap;
-    }
-
-    public void setPromoterMap(HashMap<String, Integer> promoterMap) {
-        this.promoterMap = promoterMap;
-    }
-
     private HashMap<String,Integer> promoterMap;
-
-
-
-
-    public int getAverageSpend() {
-        return averageSpend;
-    }
-
-    public void setAverageSpend() {
-        int total = 0;
-        for(Event event : pastEventAttendance) {
-           total += event.getAveragePrice();
-        }
-        if(pastEventAttendance.size() != 0){
-            this.averageSpend = total / pastEventAttendance.size();
-        }
-        else{
-            this.averageSpend = 0;
-        }
-
-    }
+    private HashMap<String,String> promoterCorrelationMap;
 
     @Override
     public String toString() {
@@ -133,30 +103,54 @@ public class Person {
         this.eventDays = days;
     }
 
-    public HashMap<String,Integer> calculateEventDays() {
-        // Init Map
-        HashMap<String,Integer> days = new HashMap<String, Integer>();
-        ArrayList<Event> events = getPastEventAttendance();
-        for(Event event : events){
-            String day = event.getDay();
-            if(!days.containsKey(day)) {
-                days.put(day,1);
-            }
-            else{
-                days.put(day,days.get(day) + 1);
-            }
-        }
-        return days;
-    }
-
-
-
     public HashMap<String, Integer> getVenueMap() {
         return venueMap;
     }
 
     public void setVenueMap(HashMap<String, Integer> venueMap) {
         this.venueMap = venueMap;
+    }
+
+    public HashMap<String, Integer> getPromoterMap() {
+        return promoterMap;
+    }
+
+    public void setPromoterMap(HashMap<String, Integer> promoterMap) {
+        this.promoterMap = promoterMap;
+    }
+
+    public HashMap<String,Integer> calculatePromoterMaps() {
+        // Init Map
+        HashMap<String,Integer> promoterMap = new HashMap<String, Integer>();
+        ArrayList<Event> events = getPastEventAttendance();
+        for(Event event : events){
+            String promoter = event.getPromoter().getName();
+            if(!promoterMap.containsKey(promoter)) {
+                promoterMap.put(promoter,1);
+            }
+            else{
+                promoterMap.put(promoter,promoterMap.get(promoter) + 1);
+            }
+        }
+        return promoterMap;
+    }
+    
+    public int getAverageSpend() {
+        return averageSpend;
+    }
+
+    public void setAverageSpend() {
+        int total = 0;
+        for(Event event : pastEventAttendance) {
+            total += event.getAveragePrice();
+        }
+        if(pastEventAttendance.size() != 0){
+            this.averageSpend = total / pastEventAttendance.size();
+        }
+        else{
+            this.averageSpend = 0;
+        }
+
     }
 
     public HashMap<String,Integer> calculateVenueMaps() {
@@ -175,5 +169,22 @@ public class Person {
         return venueMap;
     }
 
+    public HashMap<String,Integer> calculateEventDays() {
+        // Init Map
+        HashMap<String,Integer> days = new HashMap<String, Integer>();
+        ArrayList<Event> events = getPastEventAttendance();
+        for(Event event : events){
+            String day = event.getDay();
+            if(!days.containsKey(day)) {
+                days.put(day,1);
+            }
+            else{
+                days.put(day,days.get(day) + 1);
+            }
+        }
+        return days;
+    }
+
+    
 }
 
