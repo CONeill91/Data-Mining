@@ -5,6 +5,8 @@
 
 import model.*;
 import util.CsvImporter;
+
+import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -86,12 +88,12 @@ public class Prediction {
                 person.setPromoterCorrelationMap(person.calculatePromoterCorrelationMaps());
                 //LOGGER.info(person.getPromoterCorrelationMap().toString());
             }
-
-            for(Person person : listOfPeople){
+            promotorPrediction(listOfPeople,listOfPeople.get(5),listOfEvents.get(5));
+           /* for(Person person : listOfPeople){
                 for(Event event : listOfEvents){
-                    LOGGER.info(calculatePredictionScore(person, event) + "");
+                    //LOGGER.info(calculatePredictionScore(person, event) + "");
                 }
-            }
+            }*/
 
         }
         catch(FileNotFoundException e){
@@ -167,7 +169,35 @@ public class Prediction {
      *  predicted event, the more likely a person is to attend.
      */
 
-    public static int promotorPrediction(Person person, Event futureEvent){
+    public static int promotorPrediction(ArrayList<Person> persons,Person person,Event futureEvent){
+        HashMap<Correlation,Integer> masterCorrelationMap = new HashMap<Correlation, Integer>();
+        for(Person p: persons){
+            HashMap<Correlation,Integer> personPromoterCorrelationMap = p.getPromoterCorrelationMap();
+            Iterator it = personPromoterCorrelationMap.entrySet().iterator();
+            while(it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
+                if(!masterCorrelationMap.containsKey(pair.getKey())){
+                    masterCorrelationMap.put((Correlation)pair.getKey(),(Integer)pair.getValue());
+                }
+                masterCorrelationMap.put((Correlation)pair.getKey(),masterCorrelationMap.get(pair.getKey()) + (Integer)pair.getValue());
+            }
+
+        }
+        Iterator it =masterCorrelationMap.entrySet().iterator();
+        int total = 0;
+        int count = 0;
+        while (it.hasNext()){
+            Map.Entry pair = (Map.Entry)it.next();
+            Correlation correlation = (Correlation)pair.getKey();
+            if (correlation.getEventB().equals(futureEvent.getPromoter().getName())){
+                count++;
+                total += (Integer)pair.getValue();
+            }
+        }
+        int averageCorrelation = total / count;
+
+        LOGGER.info(averageCorrelation + "");
+
         return 0;
     }
 
