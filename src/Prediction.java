@@ -4,9 +4,8 @@
  */
 
 import model.*;
+import sun.rmi.runtime.Log;
 import util.CsvImporter;
-
-import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -16,18 +15,13 @@ import java.util.logging.Logger;
 public class Prediction {
 
     private static final Logger LOGGER = Logger.getLogger( Prediction.class.getName() );
-    // TODO promotor / demographic
-    // TODO Test algorithm
-    // TODO Tweak Weights.
-    //
+
     public static final double DATE_WEIGHT = 5;
     public static final double DAY_WEIGHT = 20;
     public static final double PROMOTOR_WEIGHT = 30;
     public static final double PRICE_WEIGHT = 20;
     public static final double VENUE_WEIGHT = 15;
     public static final double GENDER_WEIGHT = 10;
-
-
 
     public static void main(String[] args)  {
 
@@ -38,18 +32,18 @@ public class Prediction {
             ArrayList<Guest> guestList = importer.importGuestList();
             HashMap<String, Person> peopleMap = new HashMap<String, Person>();
             HashMap<String, Event> eventMap = new HashMap<String, Event>();
-
-            // Change listOfEvents to whatever year we want
+/*
+            // Change listOfEvents to 2015 only events for testing.
             Iterator<Event> it = listOfEvents.iterator();
             while(it.hasNext()){
                 Event event = it.next();
                 Calendar cal = Calendar.getInstance();
                 cal.setTime(event.getDate());
-                if(cal.get(Calendar.YEAR) != 2014){
+                if(cal.get(Calendar.YEAR) != 2015){
                     it.remove();
                 }
 
-            }
+            }*/
 
             for (Person person : listOfPeople) {
                 peopleMap.put(person.getUser_id(), person);
@@ -78,12 +72,10 @@ public class Prediction {
 
             }
 
-          //  testAlgorithm(listOfPeople,listOfEvents);
 
             // They don't contribute anything but zeroes
             removePeopleWithNoAttendance(listOfPeople);
             removeEventsWithNoAttendance(listOfEvents);
-
             calculateDemographic(listOfPeople,listOfEvents);
             calculateGenderSplit(listOfEvents);
 
@@ -91,8 +83,10 @@ public class Prediction {
 
             for (Event event : listOfEvents) {
                 event.setAttending(event.getMalesAttending() + event.getFemalesAttending());
-                //LOGGER.info(listOfEvents.size()+"");
+                event.getVenue().setEventsInVenue(event.getVenue().calculateEventsInVenue(listOfEvents));
             }
+
+
 
             // Set remaining Person Values
             for(Person person : listOfPeople){
@@ -101,18 +95,12 @@ public class Prediction {
                 person.setVenueMap(person.calculateVenueMaps());
                 person.setPromoterMap(person.calculatePromoterMaps());
                 person.setPromoterCorrelationMap(person.calculatePromoterCorrelationMaps());
-
             }
 
 
 
-
-
-            // Training Algorithm
-            testAlgorithm(listOfPeople,listOfEvents);
-
-
-
+            // Test Algorithm on 2015 data.
+            //testAlgorithm(listOfPeople,listOfEvents);
 
         }
         catch(FileNotFoundException e){
@@ -121,21 +109,23 @@ public class Prediction {
         }
     }
 
+    //
     public static void testAlgorithm(ArrayList<Person> persons, ArrayList<Event> events) {
         ArrayList<Person> testPeople = new ArrayList<Person>();
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
             int randomNum = (int) (Math.random() * persons.size() - 1);
             testPeople.add(persons.get(randomNum));
-
         }
-        for(Person person: testPeople){
-            LOGGER.info(calculatePredictionScore(person,events.get(47),persons));
+        for(Event event: events){
+            LOGGER.info(event.getName());
+            for(Person person: testPeople){
+                LOGGER.info(calculatePredictionScore(person,event,persons));
+            }
         }
-
     }
 
 
-
+    // Set gender demographic values
     public static void calculateDemographic(ArrayList<Person> persons, ArrayList<Event> events){
         for(Event event: events){
             for(Person person: persons){
@@ -155,15 +145,24 @@ public class Prediction {
     }
 
     // Calculate the gender split for each event
-    public static void calculateGenderSplit(ArrayList<Event> events){
-        for(Event event : events){
-            int total = event.getFemalesAttending() + event.getMalesAttending();
-            if(total != 0){
-                event.setDemograpicMale(((double)event.getMalesAttending() / (double)total) * 100.00);
+    public static void calculateGenderSplit(ArrayList<Event> events) {
+        HashSet<Venue> venues = new HashSet<Venue>();
+        for(Event event: events){
+            venues.add(event.getVenue());
+        }
+
+        for(Venue venue: venues){
+            //LOGGER.info(venue.getName());
+            ArrayList<Event>venueEvents = venue.getEventsInVenue();
+            int totalMales = 0;
+            int totalFemales = 0;
+
+            for(Event event : venueEvents){
+                totalMales += event.getMalesAttending();
+                totalFemales += event.getFemalesAttending();
             }
-            if(event.getDemograpicMale() != 0){
-                event.setDemograpicFemale(100.00 - event.getDemograpicMale());
-            }
+            double splitdiff = Math.abs(totalFemales + totalMales);
+            venue.setSplit(splitdiff);
         }
     }
 
@@ -256,38 +255,28 @@ public class Prediction {
     * the more likely they are to attend
      */
     public static double genderPrediction(Person person, Event futureEvent) {
-        ArrayList<Event> events = person.getPastEventAttendance();
-        double count = 0;
-        double totalMaleDemo = 0;
-        double totalFemaleDemo = 0;
-        for (Event event : events) {
-            totalMaleDemo += event.getDemograpicMale();
-            totalFemaleDemo += event.getDemograpicFemale();
-            count++;
+       double splitDifference= futureEvent.getVenue().getSplit();
+        if(splitDifference == 0){
+            return GENDER_WEIGHT;
         }
-        if (count != 0) {
-            double averageFemaleDemo = totalFemaleDemo / count;
-            double averageMaleDemo = totalMaleDemo / count;
-            double eventMaleDemo = futureEvent.getDemograpicMale();
-            double eventFemaleDemo = futureEvent.getDemograpicFemale();
-
-            if ((averageFemaleDemo >= eventFemaleDemo - 5 && averageFemaleDemo <= eventFemaleDemo + 5) &&
-                    (averageMaleDemo >= eventMaleDemo - 5 && averageMaleDemo <= eventMaleDemo + 5)) {
-                return GENDER_WEIGHT;
-            } else if ((averageFemaleDemo >= eventFemaleDemo - 10 && averageFemaleDemo <= eventFemaleDemo + 10) &&
-                    (averageMaleDemo >= eventMaleDemo - 10 && averageMaleDemo <= eventMaleDemo + 10)) {
-                return GENDER_WEIGHT * 0.80;
-            } else if ((averageFemaleDemo >= eventFemaleDemo - 15 && averageFemaleDemo <= eventFemaleDemo + 15) &&
-                    (averageMaleDemo >= eventMaleDemo - 15 && averageMaleDemo <= eventMaleDemo + 15)) {
-                return GENDER_WEIGHT * 0.50;
-            } else if ((averageFemaleDemo >= eventFemaleDemo - 20 && averageFemaleDemo <= eventFemaleDemo + 20) &&
-                    (averageMaleDemo >= eventMaleDemo - 20 && averageMaleDemo <= eventMaleDemo + 20)) {
-                return GENDER_WEIGHT * 0.30;
-            }
-
+        else if (splitDifference <= 10){
+            return GENDER_WEIGHT * 0.80;
+        }
+        else if (splitDifference <= 20){
+            return GENDER_WEIGHT * 0.60;
+        }
+        else if (splitDifference <= 30){
+            return GENDER_WEIGHT * 0.50;
+        }
+        else if (splitDifference <= 40){
+            return GENDER_WEIGHT * 0.40;
         }
         return 0;
+
+
     }
+
+
 
 
 
@@ -375,10 +364,8 @@ public class Prediction {
             }
         }
         return  promotorPrediction(persons,person,futureEvent) + dayPrediction(person,futureEvent) + datePrediction(futureEvent) + pricePrediction(person,futureEvent)
-                + venuePrediction(person,futureEvent) + genderPrediction(person,futureEvent) + "% chance the person will attend the event"
-                + "   Did the person attended event: " + attended;
-
-
+                + venuePrediction(person,futureEvent) + genderPrediction(person,futureEvent) + "% chance that "+ person.getFirst_name() +" will attend the event"
+                + "\t {Did the person attended event?} " + attended;
 
     }
 
