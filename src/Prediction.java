@@ -89,11 +89,11 @@ public class Prediction {
                 //LOGGER.info(person.getPromoterCorrelationMap().toString());
             }
             promotorPrediction(listOfPeople,listOfPeople.get(5),listOfEvents.get(5));
-           /* for(Person person : listOfPeople){
-                for(Event event : listOfEvents){
-                    //LOGGER.info(calculatePredictionScore(person, event) + "");
+            for(Person person : listOfPeople) {
+                for (Event event : listOfEvents) {
+                    LOGGER.info(calculatePredictionScore(person, event, listOfPeople) + "");
                 }
-            }*/
+            }
 
         }
         catch(FileNotFoundException e){
@@ -169,7 +169,7 @@ public class Prediction {
      *  predicted event, the more likely a person is to attend.
      */
 
-    public static int promotorPrediction(ArrayList<Person> persons,Person person,Event futureEvent){
+    public static double promotorPrediction(ArrayList<Person> persons,Person person,Event futureEvent){
         HashMap<Correlation,Integer> masterCorrelationMap = new HashMap<Correlation, Integer>();
         for(Person p: persons){
             HashMap<Correlation,Integer> personPromoterCorrelationMap = p.getPromoterCorrelationMap();
@@ -194,9 +194,22 @@ public class Prediction {
                 total += (Integer)pair.getValue();
             }
         }
-        int averageCorrelation = total / count;
-
-        LOGGER.info(averageCorrelation + "");
+        double averageCorrelation = total / count;
+        if(averageCorrelation == 1){
+            return PROMOTOR_WEIGHT;
+        }
+        else if (averageCorrelation == 2){
+            return PROMOTOR_WEIGHT * 0.80;
+        }
+        else if(averageCorrelation == 3){
+            return PROMOTOR_WEIGHT * 0.50;
+        }
+        else if(averageCorrelation == 4){
+            return PROMOTOR_WEIGHT * 0.30;
+        }
+        else if(averageCorrelation == 5){
+            return PROMOTOR_WEIGHT * 0.10;
+        }
 
         return 0;
     }
@@ -317,8 +330,8 @@ public class Prediction {
 
 
     // Call all sub-algorithms & return a percentage.
-    public static String calculatePredictionScore(Person person, Event futureEvent){
-        return dayPrediction(person,futureEvent) + datePrediction(futureEvent) + pricePrediction(person,futureEvent)
+    public static String calculatePredictionScore(Person person, Event futureEvent,ArrayList<Person> persons){
+        return  promotorPrediction(persons,person,futureEvent) + dayPrediction(person,futureEvent) + datePrediction(futureEvent) + pricePrediction(person,futureEvent)
                 + venuePrediction(person,futureEvent) + genderPrediction(person,futureEvent) + "% chance the person will attend the event";
 
 
