@@ -39,6 +39,18 @@ public class Prediction {
             HashMap<String, Person> peopleMap = new HashMap<String, Person>();
             HashMap<String, Event> eventMap = new HashMap<String, Event>();
 
+            // Change listOfEvents to whatever year we want
+            Iterator<Event> it = listOfEvents.iterator();
+            while(it.hasNext()){
+                Event event = it.next();
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(event.getDate());
+                if(cal.get(Calendar.YEAR) != 2014){
+                    it.remove();
+                }
+
+            }
+
             for (Person person : listOfPeople) {
                 peopleMap.put(person.getUser_id(), person);
             }
@@ -66,6 +78,8 @@ public class Prediction {
 
             }
 
+          //  testAlgorithm(listOfPeople,listOfEvents);
+
             // They don't contribute anything but zeroes
             removePeopleWithNoAttendance(listOfPeople);
             removeEventsWithNoAttendance(listOfEvents);
@@ -77,6 +91,7 @@ public class Prediction {
 
             for (Event event : listOfEvents) {
                 event.setAttending(event.getMalesAttending() + event.getFemalesAttending());
+                //LOGGER.info(listOfEvents.size()+"");
             }
 
             // Set remaining Person Values
@@ -86,14 +101,18 @@ public class Prediction {
                 person.setVenueMap(person.calculateVenueMaps());
                 person.setPromoterMap(person.calculatePromoterMaps());
                 person.setPromoterCorrelationMap(person.calculatePromoterCorrelationMaps());
-                //LOGGER.info(person.getPromoterCorrelationMap().toString());
+
             }
-            promotorPrediction(listOfPeople,listOfPeople.get(5),listOfEvents.get(5));
-            for(Person person : listOfPeople) {
-                for (Event event : listOfEvents) {
-                    LOGGER.info(calculatePredictionScore(person, event, listOfPeople) + "");
-                }
-            }
+
+
+
+
+
+            // Training Algorithm
+            testAlgorithm(listOfPeople,listOfEvents);
+
+
+
 
         }
         catch(FileNotFoundException e){
@@ -101,6 +120,21 @@ public class Prediction {
             e.printStackTrace();
         }
     }
+
+    public static void testAlgorithm(ArrayList<Person> persons, ArrayList<Event> events) {
+        ArrayList<Person> testPeople = new ArrayList<Person>();
+        for (int i = 0; i < 5; i++) {
+            int randomNum = (int) (Math.random() * persons.size() - 1);
+            testPeople.add(persons.get(randomNum));
+
+        }
+        for(Person person: testPeople){
+            LOGGER.info(calculatePredictionScore(person,events.get(47),persons));
+        }
+
+    }
+
+
 
     public static void calculateDemographic(ArrayList<Person> persons, ArrayList<Event> events){
         for(Event event: events){
@@ -171,6 +205,7 @@ public class Prediction {
 
     public static double promotorPrediction(ArrayList<Person> persons,Person person,Event futureEvent){
         HashMap<Correlation,Integer> masterCorrelationMap = new HashMap<Correlation, Integer>();
+        // Populate master correlation map
         for(Person p: persons){
             HashMap<Correlation,Integer> personPromoterCorrelationMap = p.getPromoterCorrelationMap();
             Iterator it = personPromoterCorrelationMap.entrySet().iterator();
@@ -183,6 +218,7 @@ public class Prediction {
             }
 
         }
+
         Iterator it =masterCorrelationMap.entrySet().iterator();
         int total = 0;
         int count = 0;
@@ -331,8 +367,16 @@ public class Prediction {
 
     // Call all sub-algorithms & return a percentage.
     public static String calculatePredictionScore(Person person, Event futureEvent,ArrayList<Person> persons){
+        boolean attended = false;
+        for (Event event : person.getPastEventAttendance()){
+            if(event.getId().equals(futureEvent.getId())){
+                attended = true;
+                break;
+            }
+        }
         return  promotorPrediction(persons,person,futureEvent) + dayPrediction(person,futureEvent) + datePrediction(futureEvent) + pricePrediction(person,futureEvent)
-                + venuePrediction(person,futureEvent) + genderPrediction(person,futureEvent) + "% chance the person will attend the event";
+                + venuePrediction(person,futureEvent) + genderPrediction(person,futureEvent) + "% chance the person will attend the event"
+                + "   Did the person attended event: " + attended;
 
 
 
