@@ -32,18 +32,7 @@ public class Prediction {
             ArrayList<Guest> guestList = importer.importGuestList();
             HashMap<String, Person> peopleMap = new HashMap<String, Person>();
             HashMap<String, Event> eventMap = new HashMap<String, Event>();
-/*
-            // Change listOfEvents to 2015 only events for testing.
-            Iterator<Event> it = listOfEvents.iterator();
-            while(it.hasNext()){
-                Event event = it.next();
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(event.getDate());
-                if(cal.get(Calendar.YEAR) != 2015){
-                    it.remove();
-                }
 
-            }*/
 
             for (Person person : listOfPeople) {
                 peopleMap.put(person.getUser_id(), person);
@@ -99,8 +88,20 @@ public class Prediction {
 
 
 
+            // Change listOfEvents to 2015 only events for testing.
+            Iterator<Event> it = listOfEvents.iterator();
+            while(it.hasNext()){
+                Event event = it.next();
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(event.getDate());
+                if(cal.get(Calendar.YEAR) != 2015){
+                    it.remove();
+                }
+
+            }
+
             // Test Algorithm on 2015 data.
-            //testAlgorithm(listOfPeople,listOfEvents);
+            testAlgorithm(listOfPeople,listOfEvents);
 
         }
         catch(FileNotFoundException e){
@@ -156,6 +157,8 @@ public class Prediction {
             ArrayList<Event>venueEvents = venue.getEventsInVenue();
             int totalMales = 0;
             int totalFemales = 0;
+            if(venueEvents != null){
+
 
             for(Event event : venueEvents){
                 totalMales += event.getMalesAttending();
@@ -163,6 +166,7 @@ public class Prediction {
             }
             double splitdiff = Math.abs(totalFemales + totalMales);
             venue.setSplit(splitdiff);
+            }
         }
     }
 
