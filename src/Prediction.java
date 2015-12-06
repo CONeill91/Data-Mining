@@ -5,8 +5,6 @@
 
 import model.*;
 import util.CsvImporter;
-
-import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -30,9 +28,6 @@ public class Prediction {
 
 
     public static void main(String[] args)  {
-
-
-
 
         CsvImporter importer = new CsvImporter();
         try {
@@ -69,35 +64,34 @@ public class Prediction {
 
             }
 
-
-
             // They don't contribute anything but zeroes
             removePeopleWithNoAttendance(listOfPeople);
             removeEventsWithNoAttendance(listOfEvents);
+
             calculateDemographic(listOfPeople,listOfEvents);
             calculateGenderSplit(listOfEvents);
 
 
 
-
             for (Event event : listOfEvents) {
-
                 event.setAttending(event.getMalesAttending() + event.getFemalesAttending());
-             //  LOGGER.info("Total : " + event.getAttending() + "  Males: " + event.getMalesAttending() + "  Females: " + event.getFemalesAttending() + "   Nones: " +event.getNonesAttending());
-                //LOGGER.info("AverageAttendance :" + event.getVenue().getAverageCapacity() + " AveragePrice: " + event.getAveragePrice());
-
             }
+
             // Set remaining Person Values
             for(Person person : listOfPeople){
                 person.setAverageSpend();
                 person.setEventDays(person.calculateEventDays());
                 person.setVenueMap(person.calculateVenueMaps());
                 person.setPromoterMap(person.calculatePromoterMaps());
-                LOGGER.info(person.calculatePromoterCorrelationMaps().toString());
-
+                person.setPromoterCorrelationMap(person.calculatePromoterCorrelationMaps());
+                //LOGGER.info(person.getPromoterCorrelationMap().toString());
             }
 
-
+            for(Person person : listOfPeople){
+                for(Event event : listOfEvents){
+                    LOGGER.info(calculatePredictionScore(person, event) + "");
+                }
+            }
 
         }
         catch(FileNotFoundException e){
@@ -105,9 +99,6 @@ public class Prediction {
             e.printStackTrace();
         }
     }
-
-
-
 
     public static void calculateDemographic(ArrayList<Person> persons, ArrayList<Event> events){
         for(Event event: events){
@@ -126,6 +117,7 @@ public class Prediction {
         }
 
     }
+
     // Calculate the gender split for each event
     public static void calculateGenderSplit(ArrayList<Event> events){
         for(Event event : events){
@@ -169,18 +161,21 @@ public class Prediction {
 
 
     // ** Prediction Methods **
-
-    public static int calculatepromoterCorrelation(ArrayList<Person> persons, ArrayList<Event> events ){
-        HashMap<String[],Integer> correlationPairs = new HashMap<String[], Integer>();
-        return 0;
-        }
+    /*
+     *  Each person object has a correlation map containing all pairs of promoters of events they have attended &
+     *  the correlation between them. The higher the correlation between previous events and the promoter of the
+     *  predicted event, the more likely a person is to attend.
+     */
 
     public static int promotorPrediction(Person person, Event futureEvent){
         return 0;
     }
 
 
-
+    /*
+    * The closer the demographic of the event is to the average demographic of a persons's previous events,
+    * the more likely they are to attend
+     */
     public static double genderPrediction(Person person, Event futureEvent) {
         ArrayList<Event> events = person.getPastEventAttendance();
         double count = 0;
@@ -217,7 +212,7 @@ public class Prediction {
 
 
 
-    // Done
+    // If the event falls on the day before a BH a person is more likely to attend.
     public static double datePrediction(Event event){
         ArrayList<Date> bankHolidays = initBankHolidayList();
         for(Date date : bankHolidays){
@@ -228,6 +223,7 @@ public class Prediction {
         return 0;
     }
 
+    // The more a person frequents a venue the more likely they are to attend an event in that venue.
     public static double venuePrediction(Person person, Event futureEvent){
         String futureEventVenue = futureEvent.getVenue().getName();
         HashMap<String,Integer> personVenueMap = person.getVenueMap();
@@ -252,7 +248,7 @@ public class Prediction {
         return 0;
     }
 
-
+    // The closer the event price is to a person's average spend, the more likely they are to attend.
     public static double pricePrediction(Person person,Event event){
         if(event.getAveragePrice() <= person.getAverageSpend()){
             return PRICE_WEIGHT;
@@ -266,15 +262,7 @@ public class Prediction {
         return 0;
     }
 
-
-    // Day Weights
-    // Out on this day :
-    // >= 15 100
-    // >= 10 80%
-    // >= 7 50%
-    // >= 3 30*
-    
-    
+    // If a person normally goes out on a certain day, they are more likely to go out again on that day.
     public static double dayPrediction(Person person,Event futureEvent){
         String dayofFutureEvent = futureEvent.getDay();
         HashMap<String,Integer> dayMap = person.getEventDays();
@@ -298,11 +286,12 @@ public class Prediction {
     }
 
 
-    public static double calculatePredictionScore(Person person, Event futureEvent){
-        double totalScore = dayPrediction(person,futureEvent) + datePrediction(futureEvent) + pricePrediction(person,futureEvent)
-                + venuePrediction(person,futureEvent) + venuePrediction(person,futureEvent);
+    // Call all sub-algorithms & return a percentage.
+    public static String calculatePredictionScore(Person person, Event futureEvent){
+        return dayPrediction(person,futureEvent) + datePrediction(futureEvent) + pricePrediction(person,futureEvent)
+                + venuePrediction(person,futureEvent) + genderPrediction(person,futureEvent) + "% chance the person will attend the event";
 
-         return totalScore / 100.00;
+
 
     }
 

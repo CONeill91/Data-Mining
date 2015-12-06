@@ -186,6 +186,13 @@ public class Person {
     }
 
 
+    public HashMap<Correlation, Integer> getPromoterCorrelationMap() {
+        return promoterCorrelationMap;
+    }
+
+    public void setPromoterCorrelationMap(HashMap<Correlation, Integer> promoterCorrelationMap) {
+        this.promoterCorrelationMap = promoterCorrelationMap;
+    }
 
     public HashMap<Correlation,Integer> calculatePromoterCorrelationMaps() {
         // Init Map
@@ -199,6 +206,7 @@ public class Person {
                 temp.setEventB(prom1);
                 if(temp.getEventA().equals(temp.getEventB())){
                     continue;
+
                 }
                 correlationMap.put(temp,promoterMap.get(temp.getEventA()) / promoterMap.get(temp.getEventB()));
             }
